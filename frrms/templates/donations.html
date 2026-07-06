@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Donations | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Donation Management</h2>
+      <p class="text-muted small mb-0">Track monetary and in-kind contributions.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  {% set role = request.session.get("user", {}).get("role") %}
+  {% if role in ["admin", "coordinator", "viewer"] %}
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Send Monetary Donation</h3>
+          <form method="post" action="{{ url_for('add_monetary_donation') }}" class="row g-2">
+            <div class="col-12 col-md-5">
+              <input class="form-control" type="text" name="donor_name" placeholder="Donor name" required />
+            </div>
+            <div class="col-6 col-md-3">
+              <input class="form-control" type="number" step="0.01" min="0.01" name="amount" placeholder="Amount" required />
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="text" name="currency" value="BDT" />
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-primary btn-sm w-100" type="submit">Send</button>
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="payment_method">
+                <option value="bkash">bKash</option>
+                <option value="nagad">Nagad</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="cash">Cash</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <input class="form-control" type="text" name="transaction_reference" placeholder="Transaction ref (optional)" />
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="note" placeholder="Note (optional)" />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Send In-kind Donation (Parcel)</h3>
+          <form method="post" action="{{ url_for('add_in_kind_donation') }}" class="row g-2">
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="donor_name" placeholder="Donor name" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="resource_id">
+                <option value="">Select resource (optional)</option>
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="resource_name" placeholder="Or type new item name" />
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="number" step="0.01" min="0.01" name="quantity" placeholder="Qty" required />
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="text" name="unit" placeholder="Unit" />
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="delivery_method">
+                <option value="parcel">Parcel (low/no cost)</option>
+                <option value="courier">Courier</option>
+                <option value="drop_off">Drop-off</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="number" step="0.01" min="0" name="min_delivery_cost" placeholder="Delivery cost (0 for free)" value="0" />
+            </div>
+            <div class="col-12 col-md-4">
+              <button class="btn btn-primary btn-sm w-100" type="submit">Send</button>
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="note" placeholder="Note (optional)" />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% elif role == "field_personnel" %}
+  <div class="alert alert-secondary py-2">Field personnel can view donations but cannot modify records.</div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Monetary Donations</h3></div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase"><th class="px-3">Donor</th><th>Amount</th><th>Method</th><th>Date</th></tr>
+              </thead>
+              <tbody>
+                {% for donation in monetary %}
+                <tr>
+                  <td class="px-3">{{ donation.donor.donor_name if donation.donor else "-" }}</td>
+                  <td>{{ donation.amount }} {{ donation.currency }}</td>
+                  <td>{{ donation.payment_method or "-" }}</td>
+                  <td>{{ donation.received_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                </tr>
+                {% else %}
+                <tr><td class="px-3 py-4 text-muted" colspan="4">No monetary donations yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">In-kind Donations</h3></div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase"><th class="px-3">Donor</th><th>Item</th><th>Qty</th><th>Note</th></tr>
+              </thead>
+              <tbody>
+                {% for donation in in_kind %}
+                <tr>
+                  <td class="px-3">{{ donation.donor.donor_name if donation.donor else "-" }}</td>
+                  <td>{{ donation.resource.name if donation.resource else "-" }}</td>
+                  <td>{{ donation.quantity }} {{ donation.unit }}</td>
+                  <td>{{ donation.note or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr><td class="px-3 py-4 text-muted" colspan="4">No in-kind donations yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

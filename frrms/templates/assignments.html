@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Team Assignments | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Admin Team Assignments</h2>
+      <p class="text-muted small mb-0">Assign volunteer teams to districts and places.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Add District</h3>
+          <form method="post" action="{{ url_for('create_district') }}" class="row g-2">
+            <div class="col-12 col-md-6">
+              <input class="form-control" name="name" type="text" placeholder="District name" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" name="code" type="text" placeholder="Code (optional)" />
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-primary btn-sm w-100" type="submit">Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Team</th>
+              <th>Preferred</th>
+              <th>Status</th>
+              <th>Current Assignment</th>
+              <th class="pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td class="px-3">{{ req.team_name }}</td>
+              <td>{{ req.preferred_district or "-" }} / {{ req.preferred_place or "-" }}</td>
+              <td>
+                {% if req.status == "assigned" %}
+                <span class="badge bg-success">Assigned</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ req.assigned_district.name if req.assigned_district else "-" }} / {{ req.assigned_place or "-" }}</td>
+              <td class="pe-3">
+                <form method="post" action="/admin/assignments/{{ req.id }}/assign" class="row g-1">
+                  <div class="col-12 col-md-4">
+                    <select class="form-select form-select-sm" name="district_id" required>
+                      <option value="">District</option>
+                      {% for district in districts %}
+                      <option value="{{ district.id }}">{{ district.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <input class="form-control form-control-sm" name="assigned_place" type="text" placeholder="Place" required />
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <input class="form-control form-control-sm" name="admin_note" type="text" placeholder="Note" />
+                  </div>
+                  <div class="col-12 col-md-1">
+                    <button class="btn btn-sm btn-primary w-100" type="submit">Set</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="5">No volunteer requests yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

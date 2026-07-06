@@ -1,0 +1,173 @@
+<div class="d-flex flex-column h-100">
+  {% set role = request.session.get("user", {}).get("role") %}
+  <div class="px-3 py-3 border-bottom">
+    <div class="d-flex align-items-center">
+      <div
+        class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+        style="width: 40px; height: 40px"
+      >
+        <i class="fa-solid fa-life-ring"></i>
+      </div>
+      <div>
+        <div class="fw-semibold text-white">FRRMS Command</div>
+        <div class="text-muted small">Flood Response Control</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-grow-1 px-2 py-3">
+    <ul class="nav nav-pills flex-column gap-1">
+      <li class="nav-item">
+        <a
+          href="{{ url_for('dashboard') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'dashboard' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('operations') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'operations' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-diagram-project"></i>
+          <span>Operations</span>
+        </a>
+      </li>
+      {% if role in ["field_personnel"] %}
+      <li class="nav-item">
+        <a
+          href="{{ url_for('field_console') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'field_console' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-walkie-talkie"></i>
+          <span>Field Console</span>
+        </a>
+      </li>
+      {% endif %}
+      {% if role in ["admin", "coordinator"] %}
+      <li class="nav-item">
+        <a
+          href="{{ url_for('coordinator_console') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'coordinator_console' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-clipboard-list"></i>
+          <span>Coordinator Console</span>
+        </a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a
+          href="{{ url_for('victims') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'victims' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-person-half-dress"></i>
+          <span>Victims</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('rescue_units') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'rescue_units' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-helmet-safety"></i>
+          <span>Rescue Units</span>
+        </a>
+      </li>
+      {% if role in ["admin", "coordinator"] %}
+      <li class="nav-item">
+        <a
+          href="{{ url_for('smart_routing') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'smart_routing' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-route"></i>
+          <span>Smart Routing</span>
+        </a>
+      </li>
+      {% endif %}
+      <li class="nav-item">
+        <a
+          href="{{ url_for('inventory') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'inventory' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-boxes-stacked"></i>
+          <span>Inventory</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('shelters') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'shelters' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-house"></i>
+          <span>Shelters</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('resource_distribution') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'resource_distribution' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-truck-ramp-box"></i>
+          <span>Resource Distribution</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('donations') }}" class="nav-link d-flex align-items-center gap-2 {% if page == 'donations' %}active{% endif %}">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          <span>Donations</span>
+        </a>
+      </li>
+      {% if role in ["admin", "coordinator"] %}
+      <li class="nav-item">
+        <a href="{{ url_for('admin_assignments') }}" class="nav-link d-flex align-items-center gap-2 {% if page == 'admin_assignments' %}active{% endif %}">
+          <i class="fa-solid fa-people-arrows"></i>
+          <span>Volunteer Assignments</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('team_approvals') }}" class="nav-link d-flex align-items-center gap-2 {% if page == 'team_approvals' %}active{% endif %}">
+          <i class="fa-solid fa-clipboard-check"></i>
+          <span>Team Approvals</span>
+        </a>
+      </li>
+      {% endif %}
+      {% if role in ["field_personnel", "team_leader"] %}
+      <li class="nav-item">
+        <a href="{{ url_for('team_onboarding') }}" class="nav-link d-flex align-items-center gap-2 {% if page == 'team_onboarding' %}active{% endif %}">
+          <i class="fa-solid fa-user-check"></i>
+          <span>Team Onboarding</span>
+        </a>
+      </li>
+      {% endif %}
+      {% if role in ["viewer"] %}
+      <li class="nav-item">
+        <a href="{{ url_for('volunteer_registration') }}" class="nav-link d-flex align-items-center gap-2 {% if page == 'volunteer_registration' %}active{% endif %}">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Volunteer Request</span>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <div class="px-3 py-3 border-top">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="small text-muted">Role</div>
+      {% if role == "admin" %}
+      <span class="badge bg-critical text-uppercase small">Admin</span>
+      {% elif role in ["coordinator", "district_manager"] %}
+      <span class="badge bg-primary text-uppercase small">Coordinator</span>
+      {% elif role in ["field_personnel"] %}
+      <span class="badge bg-success text-uppercase small">Field Personnel</span>
+      {% elif role in ["team_leader"] %}
+      <span class="badge bg-warning text-dark text-uppercase small">Team Leader</span>
+      {% elif role == "viewer" %}
+      <span class="badge bg-info text-uppercase small">Viewer</span>
+      {% else %}
+      <span class="badge bg-secondary text-uppercase small">Guest</span>
+      {% endif %}
+    </div>
+  </div>
+</div>

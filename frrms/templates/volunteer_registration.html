@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer Request | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Volunteer Request</h2>
+      <p class="text-muted small mb-0">Viewer can submit preferred district/place and wait for admin assignment.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Submit New Request</h3>
+      <form method="post" action="{{ url_for('submit_volunteer_registration') }}" class="row g-2">
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="requester_name" placeholder="Your full name" required />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="number" min="1" name="requester_age" placeholder="Age" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="contact_number" placeholder="Contact number" />
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" list="district-options" name="preferred_district" placeholder="Preferred district" />
+          <datalist id="district-options">
+            {% for district in districts %}
+            <option value="{{ district.name }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" type="text" name="preferred_place" placeholder="Preferred place" />
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="fa-solid fa-paper-plane me-1"></i>Submit Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Team</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Preferred</th>
+              <th>Status</th>
+              <th>Assigned</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td class="px-3"><strong>{{ req.team_name }}</strong></td>
+              <td>{{ req.requester_name }}</td>
+              <td>{{ req.requester_age }}</td>
+              <td>{{ req.preferred_district or "-" }} / {{ req.preferred_place or "-" }}</td>
+              <td>
+                {% if req.status == "assigned" %}
+                <span class="badge bg-success">Assigned</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ req.assigned_district.name if req.assigned_district else "-" }} / {{ req.assigned_place or "-" }}</td>
+              <td>{{ req.admin_note or "-" }}</td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="8">No volunteer requests yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Team Onboarding | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Team Onboarding</h2>
+      <p class="text-muted small mb-0">Create a volunteer team, add members, or join with invite code.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Step 1: Create Team</h3>
+          <form method="post" action="/team-onboarding/create-team" class="row g-2">
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="text" name="team_name" placeholder="Team name" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="text" name="leader_full_name" placeholder="Leader full name" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="email" name="leader_email" placeholder="Leader email (optional)" />
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="text" name="leader_phone" placeholder="Leader phone" />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="leader_specialization" value="team_lead" />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="area_name" placeholder="Base area" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="district_name" placeholder="Base district" required />
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="division" placeholder="Division (optional)" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary btn-sm" type="submit">Create Team</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Step 2: Join Team by Code</h3>
+          <form method="post" action="/team-onboarding/join" class="row g-2">
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="invite_code" placeholder="TEAM-0001" required />
+            </div>
+            <div class="col-12 col-md-8">
+              <input class="form-control" type="text" name="full_name" placeholder="Full name" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="email" name="email" placeholder="Email (optional)" />
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="text" name="phone" placeholder="Phone" />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="specialization" value="general" />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="area_name" placeholder="Area" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="district_name" placeholder="District" required />
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="division" placeholder="Division (optional)" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Submit Join Request</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Team</th>
+              <th>Invite Code</th>
+              <th>Status</th>
+              <th>Base</th>
+              <th>Add Member</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for team in all_teams %}
+            <tr>
+              <td class="px-3">{{ team.team_name }}</td>
+              <td><code>TEAM-{{ "%04d"|format(team.id) }}</code></td>
+              <td>
+                {% if team.status == "approved" %}
+                <span class="badge bg-success">Approved</span>
+                {% elif team.status == "rejected" %}
+                <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">{{ team.status|capitalize }}</span>
+                {% endif %}
+              </td>
+              <td>{{ team.base_location.area_name if team.base_location else "-" }}</td>
+              <td>
+                <form method="post" action="/team-onboarding/{{ team.id }}/members" class="row g-1">
+                  <div class="col-12 col-md-4">
+                    <input class="form-control form-control-sm" type="text" name="full_name" placeholder="Name" required />
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <input class="form-control form-control-sm" type="email" name="email" placeholder="Email" />
+                  </div>
+                  <div class="col-12 col-md-2">
+                    <input class="form-control form-control-sm" type="text" name="specialization" placeholder="Spec" value="general" />
+                  </div>
+                  <div class="col-12 col-md-2">
+                    <input class="form-control form-control-sm" type="text" name="area_name" placeholder="Area" required />
+                    <input type="hidden" name="district_name" value="{{ team.base_location.district if team.base_location else 'Dhaka' }}" />
+                    <input type="hidden" name="division" value="{{ team.base_location.division if team.base_location else '' }}" />
+                  </div>
+                  <div class="col-12 col-md-1">
+                    <button class="btn btn-sm btn-primary w-100" type="submit">+</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="5">No teams yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

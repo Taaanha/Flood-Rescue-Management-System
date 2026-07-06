@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Login | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center login-gradient">
+  <div class="container" style="max-width: 420px">
+    <div class="card shadow-lg border-0 rounded-3">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div
+            class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3"
+            style="width: 56px; height: 56px"
+          >
+            <i class="fa-solid fa-life-ring fa-lg"></i>
+          </div>
+          <h1 class="h4 fw-semibold mb-1">FRRMS Command</h1>
+          <p class="text-muted small mb-0">
+            Sign in to the Flood Rescue &amp; Resource Management console.
+          </p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger small d-flex align-items-center" role="alert">
+          <i class="fa-solid fa-circle-exclamation me-2"></i>
+          <div>{{ error }}</div>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+          <div class="mb-3">
+            <label for="username" class="form-label small fw-semibold">Username</label>
+            <input
+              type="text"
+              class="form-control form-control-lg"
+              id="username"
+              name="username"
+              required
+              autofocus
+            />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label small fw-semibold">Password</label>
+            <input
+              type="password"
+              class="form-control form-control-lg"
+              id="password"
+              name="password"
+              required
+            />
+          </div>
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-right-to-bracket me-2"></i>Sign in
+            </button>
+          </div>
+        </form>
+
+        <div class="border-top pt-3 mt-3">
+          <p class="small text-muted mb-1 fw-semibold">
+            Quick access (demo credentials)
+          </p>
+          <div class="small text-muted">
+            <span class="d-block">
+              <strong>Admin</strong>: <code>admin / admin123</code>
+            </span>
+            <span class="d-block">
+              <strong>Coordinator</strong>: <code>coordinator / coordinator123</code>
+            </span>
+            <span class="d-block">
+              <strong>Field Personnel</strong>: <code>field / field123</code>
+            </span>
+            <span class="d-block">
+              <strong>Viewer</strong>: <code>viewer / viewer123</code>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-white-50 small mt-3 mb-0">
+      FRRMS &mdash; Flood Rescue and Resource Management System
+    </p>
+  </div>
+</div>
+{% endblock %}
+

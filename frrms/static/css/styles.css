@@ -1,0 +1,117 @@
+/* Color system
+   Primary: #2563eb
+   Background: #f8fafc
+   Critical: #dc2626
+   Stable: #16a34a
+   Warning: #f59e0b
+*/
+
+body.bg-surface {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.login-gradient {
+  background: radial-gradient(circle at top left, #2563eb 0, #0f172a 40%, #020617 100%);
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 260px;
+  background: linear-gradient(180deg, #020617 0%, #020617 35%, #0b1120 100%);
+  color: #e5e7eb;
+  z-index: 1030;
+}
+
+.sidebar-offcanvas {
+  width: 260px;
+  background-color: #020617;
+  color: #e5e7eb;
+}
+
+.sidebar .nav-link {
+  border-radius: 0.5rem;
+  color: #cbd5f5;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.sidebar .nav-link i {
+  width: 1.2rem;
+  text-align: center;
+}
+
+.sidebar .nav-link:hover {
+  background-color: rgba(148, 163, 184, 0.35);
+  color: #eff6ff;
+}
+
+.sidebar .nav-link.active {
+  background-color: #2563eb;
+  color: #eff6ff;
+}
+
+.sidebar .nav-link.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bg-navbar {
+  background: linear-gradient(90deg, #0f172a 0%, #1e293b 60%, #1d4ed8 100%);
+}
+
+.main-wrapper.with-sidebar {
+  padding-left: 260px;
+}
+
+@media (max-width: 991.98px) {
+  .main-wrapper.with-sidebar {
+    padding-left: 0;
+  }
+}
+
+.main-content {
+  min-height: calc(100vh - 56px);
+}
+
+.icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+}
+
+.bg-critical {
+  background-color: #dc2626 !important;
+}
+
+.text-critical {
+  color: #dc2626 !important;
+}
+
+.bg-critical-soft {
+  background-color: rgba(220, 38, 38, 0.06);
+}
+
+.bg-success-subtle {
+  background-color: rgba(22, 163, 74, 0.08);
+}
+
+.bg-warning-subtle {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.bg-primary-subtle {
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+.bg-info-subtle {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+table.table thead th {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+

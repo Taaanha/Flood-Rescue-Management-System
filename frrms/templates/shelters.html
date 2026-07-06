@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Shelters | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Shelter Management</h2>
+      <p class="text-muted small mb-0">Add and track shelter facilities by district.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  {% set role = request.session.get("user", {}).get("role") %}
+  {% if role in ["admin", "coordinator", "district_manager"] %}
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Add Shelter</h3>
+      <form method="post" action="{{ url_for('create_shelter') }}" class="row g-2">
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="name" placeholder="Shelter name" required />
+        </div>
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="area_name" placeholder="Area name" required />
+        </div>
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="district_name" placeholder="District" required />
+        </div>
+        <div class="col-6 col-md-3">
+          <input class="form-control" type="text" name="division" placeholder="Division (optional)" />
+        </div>
+        <div class="col-6 col-md-3">
+          <input class="form-control" type="number" min="1" name="capacity" placeholder="Capacity" required />
+        </div>
+        <div class="col-12 col-md-3 d-flex align-items-center">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_medical_unit" id="has-medical-unit" value="1" />
+            <label class="form-check-label" for="has-medical-unit">Medical unit available</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="fa-solid fa-plus me-1"></i>Add Shelter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Name</th>
+              <th>District</th>
+              <th>Location</th>
+              <th>Capacity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shelter in shelters %}
+            <tr>
+              <td class="px-3"><strong>{{ shelter.name }}</strong></td>
+              <td>{{ shelter.location.district if shelter.location else "-" }}</td>
+              <td>{{ shelter.location.area_name if shelter.location else "-" }}</td>
+              <td>{{ shelter.capacity }}</td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="4">No shelters yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

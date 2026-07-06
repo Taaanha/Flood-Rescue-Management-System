@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Operations | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Operations Command</h2>
+      <p class="text-muted small mb-0">Coordinator-controlled rescue operations and assignments.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  {% set role = request.session.get("user", {}).get("role") %}
+  {% if role in ["coordinator", "admin"] %}
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Add Incident</h3>
+          <form method="post" action="/incidents/create" class="row g-2 mb-4">
+            <div class="col-12 col-md-5">
+              <input class="form-control" type="text" name="title" placeholder="Incident title" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="location_id">
+                <option value="">Select location (optional)</option>
+                {% for l in locations %}
+                <option value="{{ l.location_id }}">{{ l.area_name }}, {{ l.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <select class="form-select" name="severity">
+                <option value="moderate">Moderate</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-1">
+              <button class="btn btn-outline-primary btn-sm w-100" type="submit">Add</button>
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="description" placeholder="Description (optional)" />
+            </div>
+          </form>
+
+          <h3 class="h6 fw-semibold mb-3">Create Operation</h3>
+          <form method="post" action="/operations/create" class="row g-2">
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-muted mb-1">Incident</label>
+              <select class="form-select" name="incident_id" required>
+                <option value="">Select incident</option>
+                {% for i in incidents %}
+                <option value="{{ i.incident_id }}">#{{ i.incident_id }} - {{ i.title }}</option>
+                {% endfor %}
+              </select>
+              {% if not incidents %}
+              <div class="form-text text-danger">No incidents yet. Add one above first.</div>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small text-muted mb-1">Operation Name</label>
+              <input class="form-control" type="text" name="operation_name" placeholder="Operation name" required />
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label small text-muted mb-1">Priority</label>
+              <input class="form-control" type="number" min="1" max="10" name="priority" value="3" />
+              <div class="form-text">Number: 1 is highest, 10 is lowest.</div>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label small text-muted mb-1">Schedule Start</label>
+              <input class="form-control" type="datetime-local" name="scheduled_start" />
+            </div>
+            <div class="col-12 col-md-6">
+              <select class="form-select" name="target_location_id">
+                <option value="">Target location</option>
+                {% for l in locations %}
+                <option value="{{ l.location_id }}">{{ l.area_name }}, {{ l.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <input class="form-control" type="text" name="description" placeholder="Description" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary btn-sm" type="submit">Create</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Operation</th>
+              <th>Incident</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Location</th>
+              {% if role in ["coordinator", "admin"] %}<th class="pe-3">Actions</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for op in operations %}
+            <tr>
+              <td class="px-3"><strong>{{ op.operation_name }}</strong></td>
+              <td>{{ op.incident_title }}</td>
+              <td>{{ op.status }}</td>
+              <td>{{ op.priority }}</td>
+              <td>{{ op.area_name or "-" }}, {{ op.district or "-" }}</td>
+              {% if role in ["coordinator", "admin"] %}
+              <td class="pe-3">
+                <div class="d-flex gap-2">
+                  <form method="post" action="/operations/{{ op.operation_id }}/close">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Close</button>
+                  </form>
+                  <form method="post" action="/operations/{{ op.operation_id }}/assign" class="d-flex gap-1">
+                    <select class="form-select form-select-sm" name="personnel_id" required>
+                      <option value="">Personnel</option>
+                      {% for p in personnel %}
+                      <option value="{{ p.personnel_id }}">{{ p.full_name }}</option>
+                      {% endfor %}
+                    </select>
+                    <select class="form-select form-select-sm" name="assignment_role">
+                      <option value="general">General</option>
+                      <option value="team_lead">Team Lead</option>
+                      <option value="medic">Medic</option>
+                      <option value="diver">Diver</option>
+                      <option value="boat_operator">Boat</option>
+                      <option value="logistics">Logistics</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" type="submit">Assign</button>
+                  </form>
+                </div>
+              </td>
+              {% endif %}
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="6">No operations found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

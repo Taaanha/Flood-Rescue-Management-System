@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Rescue Units | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+  {% set role = request.session.get("user", {}).get("role") %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Rescue Units</h2>
+      <p class="text-muted small mb-0">
+        Status board for government and partner rescue teams.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-filter me-1"></i>Filter
+      </button>
+    </div>
+  </div>
+
+  {% if role in ["admin", "coordinator"] %}
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Add Rescue Unit</h3>
+      <form method="post" action="/rescue-units/create" class="row g-2">
+        <div class="col-12 col-md-4"><input class="form-control" name="team_name" placeholder="Team name" required /></div>
+        <div class="col-12 col-md-2"><input class="form-control" name="working_district" placeholder="Working district" /></div>
+        <div class="col-12 col-md-2"><input class="form-control" name="working_place" placeholder="Working place" /></div>
+        <div class="col-6 col-md-2">
+          <select class="form-select" name="status_value">
+            <option value="standby">Standby</option>
+            <option value="active">Active</option>
+            <option value="offline">Offline</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-1"><input class="form-control" type="number" min="0" name="assets_count" value="1" placeholder="Assets" /></div>
+        <div class="col-12 col-md-2"><input class="form-control" name="contact_number" placeholder="Contact number" /></div>
+        <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit">Add</button></div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-3">
+    {% for unit in rescue_units %}
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <h3 class="h6 fw-semibold mb-1">{{ unit.name }}</h3>
+              <p class="small text-muted mb-0">
+                Current operation:
+                <span class="fw-semibold">
+                  {{ unit.current_operation }}
+                </span>
+              </p>
+            </div>
+            <div>
+              {% if unit.status == "active" %}
+              <span class="badge bg-success">
+                <i class="fa-solid fa-circle me-1"></i>Active
+              </span>
+              {% elif unit.status == "standby" %}
+              <span class="badge bg-warning text-dark">
+                <i class="fa-solid fa-circle-half-stroke me-1"></i>Standby
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">
+                <i class="fa-solid fa-moon me-1"></i>Offline
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3 small text-muted">
+            <i class="fa-solid fa-truck-medical me-1 text-primary"></i>
+            <span class="me-2">Assets:</span>
+            <span class="fw-semibold text-dark">{{ unit.assets_count }}</span>
+          </div>
+
+          {% if role in ["admin", "coordinator"] and unit.source in ["rescue_teams_sql", "rescue_teams_model"] %}
+          <form method="post" action="/rescue-units/{{ unit.id }}/status" class="d-flex gap-2 mb-3">
+            <input type="hidden" name="source" value="{{ unit.source }}" />
+            <select class="form-select form-select-sm" name="status_value">
+              <option value="standby" {% if unit.status == "standby" %}selected{% endif %}>Standby</option>
+              <option value="active" {% if unit.status == "active" %}selected{% endif %}>Active</option>
+              <option value="offline" {% if unit.status == "offline" %}selected{% endif %}>Offline</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+          </form>
+          {% endif %}
+
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <div class="small text-muted">
+              <i class="fa-solid fa-phone-volume me-1 text-success"></i>
+              {{ unit.contact }}
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#unit-detail-{{ unit.id }}" aria-expanded="false">
+                Details
+              </button>
+              <a href="tel:{{ unit.contact }}" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-phone me-1"></i>Call Team
+              </a>
+            </div>
+          </div>
+          <div class="collapse mt-3" id="unit-detail-{{ unit.id }}">
+            <div class="small border rounded p-2 bg-light">
+              <div><strong>Team:</strong> {{ unit.name }}</div>
+              <div><strong>Assets:</strong> {{ unit.assets_count }}</div>
+              <div><strong>Status:</strong> {{ unit.status }}</div>
+              <div><strong>Assigned Place:</strong> {{ unit.assigned_place }}</div>
+              <div><strong>Operation:</strong> {{ unit.current_operation }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="alert alert-secondary">No rescue units found yet. Approve teams or add rescue units above.</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% set role = role or request.session.get("user", {}).get("role") %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Operational Overview</h2>
+      <p class="text-muted small mb-0">
+        Live situational view of ongoing flood rescue and shelter operations.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-rotate-right me-1"></i>Refresh
+      </button>
+      {% if role in ["coordinator", "field_personnel"] %}
+      <a href="#incident-alerts" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-bell-on me-1"></i>Incident Alerts
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    {% if role in ["admin", "coordinator"] %}
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex align-items-center">
+          <div
+            class="icon-circle bg-primary-subtle text-primary me-3 d-flex align-items-center justify-content-center"
+          >
+            <i class="fa-solid fa-people-group"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="text-muted text-uppercase small fw-semibold">
+              Total Rescued
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ total_rescued }}</div>
+            <div class="small text-success">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Operational
+              lift in last 24h
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex align-items-center">
+          <div
+            class="icon-circle bg-success-subtle text-success me-3 d-flex align-items-center justify-content-center"
+          >
+            <i class="fa-solid fa-helmet-safety"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="text-muted text-uppercase small fw-semibold">
+              Active Teams
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ active_teams }}</div>
+            <div class="small text-muted">
+              Teams deployed across impacted districts
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex align-items-center">
+          <div
+            class="icon-circle bg-warning-subtle text-warning me-3 d-flex align-items-center justify-content-center"
+          >
+            <i class="fa-solid fa-house-chimney-medical"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="text-muted text-uppercase small fw-semibold">
+              Active Shelters
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ total_shelters }}</div>
+            <div class="small text-muted">
+              Government and partner managed facilities
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex align-items-center">
+          <div
+            class="icon-circle bg-info-subtle text-info me-3 d-flex align-items-center justify-content-center"
+          >
+            <i class="fa-solid fa-box-open"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="text-muted text-uppercase small fw-semibold">
+              Inventory Health
+            </div>
+            <div class="fs-4 fw-bold text-dark">
+              {{ inventory_percentage }}%
+            </div>
+            <div class="progress mt-1" style="height: 6px">
+              <div
+                class="progress-bar {% if inventory_percentage < 40 %}bg-critical{% elif inventory_percentage < 70 %}bg-warning{% else %}bg-success{% endif %}"
+                role="progressbar"
+                style="width: {{ inventory_percentage }}%"
+                aria-valuenow="{{ inventory_percentage }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if role in ["admin", "coordinator"] %}
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body d-flex align-items-center">
+          <div
+            class="icon-circle bg-warning-subtle text-warning me-3 d-flex align-items-center justify-content-center"
+          >
+            <i class="fa-solid fa-user-check"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="text-muted text-uppercase small fw-semibold">
+              Pending Team Approval
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ team_pending_approval }}</div>
+            <div class="small text-muted">Teams waiting admin/coordinator review</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if role == "admin" %}
+  <div class="card shadow-sm border-0 rounded-3 mb-3">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Mark Map Alert (Admin)</h3>
+      <form method="post" action="/dashboard/alerts" class="row g-2">
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="area_name" placeholder="Area" required />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="district_name" placeholder="District" required />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="division" placeholder="Division" />
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="number" step="0.000001" name="latitude" placeholder="Latitude" required />
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="number" step="0.000001" name="longitude" placeholder="Longitude" required />
+        </div>
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="alert_type" required>
+            <option value="flood_warning">Flood Warning</option>
+            <option value="evacuation_order">Evacuation Order</option>
+            <option value="resource_shortage">Resource Shortage</option>
+            <option value="all_clear">All Clear</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="severity" required>
+            <option value="low">Low</option>
+            <option value="moderate">Moderate</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6">
+          <input class="form-control" type="text" name="message" placeholder="Alert message" required />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="datetime-local" name="expires_at" />
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-danger btn-sm w-100" type="submit">Mark Alert</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 mb-3">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h3 class="h6 fw-semibold mb-1">
+          <i class="fa-solid fa-robot me-1"></i>AI Flood Risk Assessment
+        </h3>
+        <p class="text-muted small mb-0">
+          Scores every district against the trained flood-risk model using live
+          weather data, and auto-creates alerts for districts at high/critical risk.
+          <a href="/public/risk-map" target="_blank">View the live risk map &rarr;</a>
+        </p>
+      </div>
+      <form method="post" action="/admin/risk-assessment/run">
+        <button class="btn btn-danger btn-sm" type="submit">
+          <i class="fa-solid fa-robot me-1"></i>Run Flood Risk Assessment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-0">
+      <div class="p-3 border-bottom">
+        <h3 class="h6 fw-semibold mb-0">Active Map Alerts</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Type</th>
+              <th>Severity</th>
+              <th>Area</th>
+              <th>Message</th>
+              <th class="pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in map_alerts %}
+            <tr>
+              <td class="px-3">{{ a.alert_type }}</td>
+              <td>{{ a.severity }}</td>
+              <td>{{ a.area_name }}, {{ a.district }}</td>
+              <td>{{ a.message }}</td>
+              <td class="pe-3">
+                <form method="post" action="/dashboard/alerts/{{ a.id }}/clear">
+                  <button class="btn btn-sm btn-outline-success" type="submit">Clear Mark</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-3 text-muted" colspan="5">No active alert marks.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if role in ["coordinator", "field_personnel"] %}
+  <div id="incident-alerts" class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-0">
+      <div class="p-3 border-bottom">
+        <h3 class="h6 fw-semibold mb-0">Active Incident Alerts</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Type</th>
+              <th>Severity</th>
+              <th>Area</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in map_alerts %}
+            <tr>
+              <td class="px-3">{{ a.alert_type }}</td>
+              <td>{{ a.severity }}</td>
+              <td>{{ a.area_name }}, {{ a.district }}</td>
+              <td>{{ a.message }}</td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-3 text-muted" colspan="4">No active incident alerts.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+          <div>
+            <h3 class="h6 mb-0 fw-semibold">Map &mdash; Current Operations</h3>
+            <p class="text-muted small mb-0">
+              Leaflet-powered situational map centered on Bangladesh.
+            </p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="map" style="height: 360px" class="rounded-3 overflow-hidden border"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-header bg-white border-0">
+          <h3 class="h6 mb-0 fw-semibold">Victims Placed in Shelters</h3>
+          <p class="text-muted small mb-0">Top shelters by number of victims currently placed.</p>
+        </div>
+        <div class="card-body" style="height: 360px">
+          <canvas id="districtChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Leaflet map initialization
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("map")) {
+      const map = L.map("map").setView([23.685, 90.3563], 7);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
+      const alerts = {{ map_alerts | tojson | safe }};
+      const colorBySeverity = {
+        low: "#16a34a",
+        moderate: "#f59e0b",
+        high: "#ea580c",
+        critical: "#dc2626",
+      };
+
+      alerts.forEach((a) => {
+        const color = colorBySeverity[a.severity] || "#2563eb";
+        const marker = L.circleMarker([a.lat, a.lng], {
+          radius: 8,
+          color: "#0f172a",
+          weight: 1,
+          fillColor: color,
+          fillOpacity: 0.9,
+        }).addTo(map);
+
+        marker.bindPopup(
+          `<strong>${a.alert_type}</strong><br/>` +
+            `<span class="text-muted">${a.area_name}, ${a.district}</span><br/>` +
+            `<span>Severity: ${a.severity}</span><br/>` +
+            `<span>${a.message}</span>`
+        );
+      });
+    }
+    const ctx = document.getElementById("districtChart");
+    if (ctx) {
+      const labels = {{ district_names | tojson | safe }};
+      const data = {{ victim_counts | tojson | safe }};
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Victims in Shelters",
+              data: data,
+              backgroundColor: "rgba(37, 99, 235, 0.8)",
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: { display: false },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0 },
+              grid: {
+                color: "rgba(148, 163, 184, 0.3)",
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    }
+
+  });
+</script>
+{% endblock %}
+

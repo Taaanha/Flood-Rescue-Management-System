@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+*.db
+*.sqlite3
+.vscode/
+check_columns.py
+check_victims.py
+fix_rescue_teams_columns.py

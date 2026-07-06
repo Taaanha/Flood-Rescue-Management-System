@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Resource Distribution | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Resource Distribution</h2>
+      <p class="text-muted small mb-0">Allocate relief inventory to districts and places.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  {% set role = request.session.get("user", {}).get("role") %}
+  {% if role in ["admin", "coordinator", "district_manager"] %}
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Add Resource</h3>
+          <form method="post" action="/resources" class="row g-2">
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="name" placeholder="Resource name" required />
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="text" name="unit" placeholder="Unit" required />
+            </div>
+            <div class="col-6 col-md-3">
+              <input class="form-control" list="category-options" name="category_name" placeholder="Category" value="General" />
+              <datalist id="category-options">
+                {% for category in categories %}
+                <option value="{{ category.category_name }}"></option>
+                {% endfor %}
+              </datalist>
+            </div>
+            <div class="col-12 col-md-3 d-flex align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_consumable" id="is-consumable" value="1" />
+                <label class="form-check-label" for="is-consumable">Consumable</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <input class="form-control" type="text" name="description" placeholder="Description (optional)" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary btn-sm" type="submit">Create Resource</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body">
+          <h3 class="h6 fw-semibold mb-3">Update Resource (Admin)</h3>
+          <form method="post" action="/resources/0/update" id="resource-update-form" class="row g-2 mb-4">
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="resource_id_selector" id="resource-update-selector" required>
+                <option value="">Select resource</option>
+                {% for resource in resources %}
+                <option
+                  value="{{ resource.id }}"
+                  data-name="{{ resource.name }}"
+                  data-unit="{{ resource.unit }}"
+                  data-category="{{ resource.category.category_name if resource.category else 'General' }}"
+                  data-description="{{ resource.description or '' }}"
+                  data-consumable="{{ '1' if resource.is_consumable else '0' }}"
+                >
+                  {{ resource.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="text" name="name" id="resource-update-name" placeholder="Name" required />
+            </div>
+            <div class="col-6 col-md-2">
+              <input class="form-control" type="text" name="unit" id="resource-update-unit" placeholder="Unit" required />
+            </div>
+            <div class="col-12 col-md-2">
+              <input class="form-control" type="text" name="category_name" id="resource-update-category" placeholder="Category" />
+            </div>
+            <div class="col-12 col-md-2 d-flex align-items-center">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="is_consumable" id="resource-update-consumable" value="1" />
+                <label class="form-check-label" for="resource-update-consumable">Consumable</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-10">
+              <input class="form-control" type="text" name="description" id="resource-update-description" placeholder="Description" />
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-warning btn-sm w-100" type="submit">Update Resource</button>
+            </div>
+          </form>
+
+          <h3 class="h6 fw-semibold mb-3">Add/Update Inventory</h3>
+          <form method="post" action="/resource-inventory" class="row g-2">
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="resource_id" required>
+                <option value="">Select resource</option>
+                {% for resource in resources %}
+                <option value="{{ resource.id }}">{{ resource.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="area_name" placeholder="Area name" required />
+            </div>
+            <div class="col-12 col-md-4">
+              <input class="form-control" type="text" name="district_name" placeholder="District" required />
+            </div>
+            <div class="col-6 col-md-3">
+              <input class="form-control" type="text" name="division" placeholder="Division (optional)" />
+            </div>
+            <div class="col-6 col-md-3">
+              <input class="form-control" type="number" step="0.01" min="0" name="quantity" placeholder="Quantity" required />
+            </div>
+            <div class="col-6 col-md-3">
+              <input class="form-control" type="number" step="0.01" min="0" name="threshold" placeholder="Threshold" value="0" />
+            </div>
+            <div class="col-6 col-md-3">
+              <button class="btn btn-primary btn-sm w-100" type="submit">Save Stock</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Distribute Resource</h3>
+      <form method="post" action="{{ url_for('distribute_resource') }}" class="row g-2">
+            <div class="col-12 col-md-4">
+              <select class="form-select" name="inventory_id" required>
+                <option value="">Select inventory item</option>
+                {% for item in inventory_items %}
+                <option value="{{ item.id }}">{{ item.resource.name }} @{{ item.location.area_name if item.location else 'Unknown' }} (Available: {{ item.quantity }} {{ item.resource.unit }})</option>
+                {% endfor %}
+              </select>
+            </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="number" step="0.01" min="0.01" name="quantity" placeholder="Quantity" required />
+        </div>
+        <div class="col-6 col-md-3">
+          <select class="form-select" name="district_id">
+            <option value="">District (optional)</option>
+            {% for district in districts %}
+            <option value="{{ district.id }}">{{ district.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" type="text" name="place" placeholder="Place/Facility" />
+        </div>
+        <div class="col-12 col-md-10">
+          <input class="form-control" type="text" name="note" placeholder="Note (optional)" />
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-primary btn-sm w-100" type="submit">Distribute</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Current Inventory</h3></div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase"><th class="px-3">Resource</th><th>Quantity</th><th>Threshold</th></tr>
+              </thead>
+              <tbody>
+                {% for item in inventory_items %}
+                <tr>
+                  <td class="px-3">{{ item.resource.name }}</td>
+                  <td>{{ item.quantity }} {{ item.resource.unit }}</td>
+                  <td>{{ item.threshold }} {{ item.resource.unit }}</td>
+                </tr>
+                {% else %}
+                <tr><td class="px-3 py-4 text-muted" colspan="3">No inventory records found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm border-0 rounded-3 h-100">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Recent Distributions</h3></div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase"><th class="px-3">Resource</th><th>Destination</th><th>Qty</th></tr>
+              </thead>
+              <tbody>
+                {% for d in distributions %}
+                <tr>
+                  <td class="px-3">{{ d.resource.name }}</td>
+                  <td>{{ d.district.name if d.district else "-" }} / {{ d.place or "-" }}</td>
+                  <td>{{ d.quantity }} {{ d.resource.unit }}</td>
+                </tr>
+                {% else %}
+                <tr><td class="px-3 py-4 text-muted" colspan="3">No distributions yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const selector = document.getElementById("resource-update-selector");
+    const form = document.getElementById("resource-update-form");
+    if (!selector || !form) return;
+
+    const nameInput = document.getElementById("resource-update-name");
+    const unitInput = document.getElementById("resource-update-unit");
+    const categoryInput = document.getElementById("resource-update-category");
+    const descriptionInput = document.getElementById("resource-update-description");
+    const consumableInput = document.getElementById("resource-update-consumable");
+
+    selector.addEventListener("change", function () {
+      const opt = selector.options[selector.selectedIndex];
+      if (!opt || !opt.value) return;
+      form.action = "/resources/" + opt.value + "/update";
+      nameInput.value = opt.dataset.name || "";
+      unitInput.value = opt.dataset.unit || "";
+      categoryInput.value = opt.dataset.category || "General";
+      descriptionInput.value = opt.dataset.description || "";
+      consumableInput.checked = (opt.dataset.consumable || "0") === "1";
+    });
+  });
+</script>
+{% endblock %}

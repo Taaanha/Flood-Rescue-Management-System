@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Victims | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Victim Registry</h2>
+      <p class="text-muted small mb-0">
+        Central registry of rescued and affected persons across all districts.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      {% set role = request.session.get("user", {}).get("role") %}
+      <button class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-file-export me-1"></i>Export
+      </button>
+    </div>
+  </div>
+
+  {% if role in ["admin", "coordinator", "field_personnel"] %}
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Register Victim</h3>
+      <form method="post" action="/victims/register" class="row g-2">
+        <div class="col-12 col-md-4">
+          <input class="form-control" type="text" name="full_name" placeholder="Full name" required />
+        </div>
+        <div class="col-12 col-md-4">
+          <select class="form-select" name="incident_id">
+            <option value="">Select incident (optional)</option>
+            {% for i in incidents %}
+            <option value="{{ i.incident_id }}">#{{ i.incident_id }} - {{ i.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-4">
+          <input class="form-control" list="incident-title-options" type="text" name="incident_title" placeholder="Or type incident title" />
+          <datalist id="incident-title-options">
+            {% for i in incidents %}
+            <option value="{{ i.title }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="district" placeholder="District" />
+        </div>
+        <div class="col-12 col-md-2">
+          <select class="form-select" name="status_value">
+            <option value="missing">Missing</option>
+            <option value="rescued">Rescued</option>
+            <option value="in_shelter">In Shelter</option>
+            <option value="hospitalized">Hospitalized</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-10">
+          <input class="form-control" type="text" name="special_needs" placeholder="Special needs (optional)" />
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-primary btn-sm w-100" type="submit">Register</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th scope="col" class="px-3">ID</th>
+              <th scope="col">Full Name</th>
+              <th scope="col">District</th>
+              <th scope="col">Status</th>
+              <th scope="col">Health Status</th>
+              <th scope="col">Rescue Team</th>
+              <th scope="col">Current Facility</th>
+              {% if role in ["admin", "coordinator", "field_personnel"] %}
+              <th scope="col" class="text-end pe-3">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for victim in victims %}
+            <tr>
+              <td class="px-3">
+                <span class="text-muted small">#{{ victim.id }}</span>
+              </td>
+              <td>
+                <strong>{{ victim.full_name }}</strong>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark">
+                  <i class="fa-solid fa-location-dot me-1 text-primary"></i
+                  >{{ victim.district }}
+                </span>
+              </td>
+              <td>
+                {% if victim.status == "missing" %}
+                <span class="badge bg-danger text-white">
+                  <i class="fa-solid fa-magnifying-glass me-1"></i>Missing
+                </span>
+                {% elif victim.status == "hospitalized" %}
+                <span class="badge bg-warning text-dark">
+                  <i class="fa-solid fa-truck-medical me-1"></i>Hospitalized
+                </span>
+                {% elif victim.status == "in_shelter" %}
+                <span class="badge bg-info text-dark">
+                  <i class="fa-solid fa-house-medical me-1"></i>In Shelter
+                </span>
+                {% elif victim.status == "rescued" %}
+                <span class="badge bg-success text-white">
+                  <i class="fa-solid fa-life-ring me-1"></i>Rescued
+                </span>
+                {% elif victim.status == "reunited" %}
+                <span class="badge bg-primary text-white">
+                  <i class="fa-solid fa-people-arrows me-1"></i>Reunited
+                </span>
+                {% elif victim.status == "deceased" %}
+                <span class="badge bg-dark text-white">
+                  <i class="fa-solid fa-ribbon me-1"></i>Deceased
+                </span>
+                {% else %}
+                <span class="badge bg-secondary text-white">{{ victim.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if victim.health_status == "critical" %}
+                <span class="badge bg-critical text-white">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i>Critical
+                </span>
+                {% else %}
+                <span class="badge bg-success text-white">
+                  <i class="fa-solid fa-heart-pulse me-1"></i>Stable
+                </span>
+                {% endif %}
+              </td>
+              <td>{{ victim.rescue_team }}</td>
+              <td>{{ victim.current_facility }}</td>
+              {% if role in ["admin", "coordinator", "field_personnel"] %}
+              <td class="text-end pe-3">
+                <form method="post" action="/victims/{{ victim.id }}/leave-shelter" class="d-inline-flex gap-2">
+                  <select class="form-select form-select-sm" name="status_value">
+                    <option value="reunited">Left Shelter (Reunited)</option>
+                    <option value="hospitalized">Left Shelter (Hospitalized)</option>
+                    <option value="rescued">Left Shelter (Other)</option>
+                  </select>
+                  <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                </form>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

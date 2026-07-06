@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Team Approvals | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">Team Approvals</h2>
+      <p class="text-muted small mb-0">Pending and approved/rejected volunteers are separated for faster review.</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-3">Add Single Volunteer To Team</h3>
+      <form method="post" action="/admin/team-approvals/add-single-volunteer" class="row g-2">
+        <div class="col-12 col-md-3">
+          <select class="form-select" name="team_id" required>
+            <option value="">Select team</option>
+            {% for t in all_teams %}
+            <option value="{{ t.id }}">{{ t.team_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" type="text" name="full_name" placeholder="Volunteer name" required />
+        </div>
+        <div class="col-6 col-md-1">
+          <input class="form-control" type="number" min="1" name="age" placeholder="Age" />
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="text" name="phone" placeholder="Phone" />
+        </div>
+        <div class="col-12 col-md-3">
+          <input class="form-control" type="text" name="specialization" placeholder="Specialization" value="general" />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="designation" placeholder="Designation" value="Volunteer" />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="area_name" placeholder="Area" value="Unknown" />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="district_name" placeholder="District" value="Unknown" />
+        </div>
+        <div class="col-12 col-md-2">
+          <input class="form-control" type="text" name="division" placeholder="Division" />
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-primary btn-sm w-100" type="submit">Add Volunteer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-0">
+      <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Pending Teams</h3></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Team</th>
+              <th>Invite Code</th>
+              <th>Pending Members</th>
+              <th class="pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for team in pending_teams %}
+            {% set pending_count = team.member_applications | selectattr("status", "equalto", "pending") | list | length %}
+            <tr>
+              <td class="px-3">
+                <div class="fw-semibold">{{ team.team_name }}</div>
+                <div class="small text-muted">Base: {{ team.base_location.area_name if team.base_location else "-" }}</div>
+              </td>
+              <td><code>{{ invite_code(team.id) }}</code></td>
+              <td>{{ pending_count }}</td>
+              <td class="pe-3">
+                <div class="d-flex gap-2">
+                  <form method="post" action="/admin/team-approvals/{{ team.id }}/approve">
+                    <button class="btn btn-sm btn-success" type="submit" {% if pending_count == 0 %}disabled{% endif %}>Approve</button>
+                  </form>
+                  <form method="post" action="/admin/team-approvals/{{ team.id }}/reject">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="4">No pending teams.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body p-0">
+      <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Pending Members (Single Volunteers)</h3></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Name</th>
+              <th>Age</th>
+              <th>Type</th>
+              <th>Team / Preferred</th>
+              <th>Status</th>
+              <th class="pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set ns = namespace(has_items=false) %}
+            {% for req in pending_single_requests %}
+              {% set ns.has_items = true %}
+              <tr>
+                <td class="px-3">{{ req.requester_name }}</td>
+                <td>{{ req.requester_age }}</td>
+                <td>Volunteer Request</td>
+                <td>{{ req.preferred_district or "-" }} / {{ req.preferred_place or "-" }}</td>
+                <td><span class="badge bg-warning text-dark">Pending</span></td>
+                <td class="pe-3">
+                  <div class="d-flex gap-2">
+                    <form method="post" action="/admin/volunteer-requests/{{ req.id }}/approve">
+                      <button class="btn btn-sm btn-success" type="submit">Approve</button>
+                    </form>
+                    <form method="post" action="/admin/volunteer-requests/{{ req.id }}/reject">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+            {% for team in pending_teams %}
+              {% for app in team.member_applications if app.status == "pending" %}
+                {% set ns.has_items = true %}
+                <tr>
+                  <td class="px-3">{{ app.full_name }}</td>
+                  <td>-</td>
+                  <td>Team Member</td>
+                  <td>{{ team.team_name }} / {{ app.specialization or "general" }}</td>
+                  <td><span class="badge bg-warning text-dark">Pending</span></td>
+                  <td class="pe-3"><span class="text-muted small">Use team approve/reject above</span></td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+            {% if not ns.has_items %}
+            <tr><td class="px-3 py-4 text-muted" colspan="6">No pending volunteer members.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body p-0">
+      <div class="p-3 border-bottom"><h3 class="h6 fw-semibold mb-0">Reviewed Teams and Members</h3></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th class="px-3">Team</th>
+              <th>Status</th>
+              <th>Reviewed Members</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for team in reviewed_teams %}
+            <tr>
+              <td class="px-3">{{ team.team_name }}</td>
+              <td>
+                {% if team.status == "approved" %}
+                <span class="badge bg-success">Approved</span>
+                {% elif team.status == "rejected" %}
+                <span class="badge bg-danger">Rejected</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ team.status or "unknown" }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% for app in team.member_applications if app.status != "pending" %}
+                <span class="me-2">{{ app.full_name }} ({{ app.status }})</span>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endfor %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td class="px-3 py-4 text-muted" colspan="3">No approved or rejected teams yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

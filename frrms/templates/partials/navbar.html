@@ -1,0 +1,53 @@
+<header class="navbar navbar-expand-lg navbar-dark bg-navbar shadow-sm">
+  <div class="container-fluid">
+    <button
+      class="btn btn-outline-light d-lg-none me-2"
+      type="button"
+      data-bs-toggle="offcanvas"
+      data-bs-target="#sidebarOffcanvas"
+      aria-controls="sidebarOffcanvas"
+    >
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <span class="navbar-brand fw-semibold d-flex align-items-center gap-2">
+      <i class="fa-solid fa-tower-observation"></i>
+      <span>FRRMS Command Center</span>
+    </span>
+
+    <div class="d-flex align-items-center ms-auto gap-3">
+      <div class="d-none d-md-flex align-items-center text-white-50 small">
+        <i class="fa-regular fa-clock me-1"></i>
+        <span id="navbar-clock">Live UTC</span>
+      </div>
+      <div class="dropdown">
+        <button
+          class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i class="fa-solid fa-user-shield"></i>
+          <span class="d-none d-sm-inline">
+            {{ request.session.get("user", {}).get("username", "Operator") }}
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <span class="dropdown-item-text small text-muted">
+              Signed in as
+              <strong>{{ request.session.get("user", {}).get("username", "Operator") }}</strong>
+            </span>
+          </li>
+          <li><hr class="dropdown-divider" /></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>Sign out
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
