@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import os
 import uvicorn
 from fastapi import FastAPI, HTTPException as FastAPIHTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -13,9 +13,11 @@ from .dependencies import normalize_role
 from .routers import auth, dashboard, victims, rescue_units, inventory, operations, command, risk, dispatch, reunification, volunteer_ai
 app = FastAPI(title="FRRMS Command", docs_url=None, redoc_url=None)
 # Session-based authentication
+import os
+
 app.add_middleware(
     SessionMiddleware,
-    secret_key="CHANGE_ME_TO_A_SECURE_RANDOM_VALUE",
+    secret_key=os.getenv("SESSION_SECRET_KEY", "CHANGE_ME_TO_A_SECURE_RANDOM_VALUE"),
     session_cookie="frrms_session",
 )
 
