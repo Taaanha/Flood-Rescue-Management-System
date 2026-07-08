@@ -62,8 +62,14 @@
     const scores = {{ scores | tojson }};
     const map = L.map('riskMap').setView([23.6850, 90.3563], 7); // Bangladesh centroid
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // NOTE: OpenStreetMap has deprecated the {s} subdomain (a./b./c.) pattern --
+    // tile.openstreetmap.org now supports HTTP/2, so subdomains aren't needed for
+    // parallel loading, and OSM's own ops team has said the old subdomain URLs
+    // may stop resolving reliably. Using the single recommended hostname instead
+    // fixes the grey/blank tiles issue seen in production.
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
     }).addTo(map);
 
     const colors = {
