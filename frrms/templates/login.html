@@ -57,24 +57,45 @@
         </form>
 
         <div class="border-top pt-3 mt-3">
-          <p class="small text-muted mb-1 fw-semibold">
-            Quick access (demo credentials)
+          <p class="small text-muted mb-2 fw-semibold text-center">
+            Quick demo access &mdash; no typing required
           </p>
-          <div class="small text-muted">
-            <span class="d-block">
-              <strong>Admin</strong>: <code>admin / admin123</code>
-            </span>
-            <span class="d-block">
-              <strong>Coordinator</strong>: <code>coordinator / coordinator123</code>
-            </span>
-            <span class="d-block">
-              <strong>Field Personnel</strong>: <code>field / field123</code>
-            </span>
-            <span class="d-block">
-              <strong>Viewer</strong>: <code>viewer / viewer123</code>
-            </span>
+          <div class="row g-2">
+            <div class="col-6">
+              <button type="button" class="btn btn-outline-danger w-100 btn-sm py-2" onclick="quickLogin('admin','admin123')">
+                <i class="fa-solid fa-user-shield d-block mb-1"></i>Admin
+              </button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-outline-primary w-100 btn-sm py-2" onclick="quickLogin('coordinator','coordinator123')">
+                <i class="fa-solid fa-clipboard-list d-block mb-1"></i>Coordinator
+              </button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-outline-success w-100 btn-sm py-2" onclick="quickLogin('field','field123')">
+                <i class="fa-solid fa-walkie-talkie d-block mb-1"></i>Field Personnel
+              </button>
+            </div>
+            <div class="col-6">
+              <button type="button" class="btn btn-outline-info w-100 btn-sm py-2" onclick="quickLogin('viewer','viewer123')">
+                <i class="fa-solid fa-eye d-block mb-1"></i>Viewer
+              </button>
+            </div>
           </div>
         </div>
+
+        <form id="quick-login-form" method="post" action="{{ url_for('login') }}" class="d-none">
+          <input type="hidden" id="quick-username" name="username" />
+          <input type="hidden" id="quick-password" name="password" />
+        </form>
+
+        <script>
+          function quickLogin(username, password) {
+            document.getElementById('quick-username').value = username;
+            document.getElementById('quick-password').value = password;
+            document.getElementById('quick-login-form').submit();
+          }
+        </script>
       </div>
     </div>
 

@@ -79,13 +79,27 @@ def compute_assignments(
         if req.preferred_district and req.preferred_district == best_district:
             reason = f"Preferred district matches highest need (risk {district_risk.get(best_district, UNKNOWN_RISK_BASELINE):.0%}, {counts.get(best_district, 0)} current volunteers)."
         elif req.preferred_district:
-            reason = (
-                f"Preferred {req.preferred_district} is already well-covered "
-                f"({counts.get(req.preferred_district, 0)} volunteers) -- "
-                f"{best_district} has higher unmet need "
-                f"(risk {district_risk.get(best_district, UNKNOWN_RISK_BASELINE):.0%}, "
-                f"only {counts.get(best_district, 0)} current volunteers)."
-            )
+            preferred_count = counts.get(req.preferred_district, 0)
+            preferred_risk = district_risk.get(req.preferred_district, UNKNOWN_RISK_BASELINE)
+            best_risk = district_risk.get(best_district, UNKNOWN_RISK_BASELINE)
+
+            if preferred_count > 0:
+                reason = (
+                    f"Preferred {req.preferred_district} already has {preferred_count} volunteer(s) -- "
+                    f"{best_district} has higher unmet need "
+                    f"(risk {best_risk:.0%}, only {counts.get(best_district, 0)} current volunteers)."
+                )
+            elif abs(preferred_risk - best_risk) < 0.01:
+                reason = (
+                    f"Preferred {req.preferred_district} and {best_district} are equally uncovered "
+                    f"and equally high-risk (both {best_risk:.0%}) -- suggesting {best_district} to spread "
+                    f"coverage rather than clustering volunteers in one district."
+                )
+            else:
+                reason = (
+                    f"{best_district} has higher unmet need than preferred {req.preferred_district} "
+                    f"(risk {best_risk:.0%} vs {preferred_risk:.0%}, both currently uncovered)."
+                )
         else:
             reason = (
                 f"No preference given -- {best_district} currently has the "
