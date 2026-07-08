@@ -288,18 +288,32 @@ def admin_assignments_page(
         .order_by(VolunteerRequest.created_at.desc())
         .all()
     )
+    request_rows = []
+    for req in requests:
+        requester_name, requester_age = _extract_requester_details(req.admin_note, req.team_name)
+        request_rows.append(
+            {
+                "id": req.id,
+                "requester_name": requester_name,
+                "requester_age": requester_age,
+                "preferred_district": req.preferred_district,
+                "preferred_place": req.preferred_place,
+                "status": req.status,
+                "assigned_district": req.assigned_district,
+                "assigned_place": req.assigned_place,
+            }
+        )
     districts = db.query(District).order_by(District.name.asc()).all()
     return templates.TemplateResponse(
         "assignments.html",
         {
             "request": request,
             "page": "admin_assignments",
-            "requests": requests,
+            "requests": request_rows,
             "districts": districts,
             "message": _message(request),
         },
     )
-
 
 @router.post("/districts", response_model=None)
 def create_district(
@@ -416,13 +430,24 @@ def create_shelter(
 
     location = _ensure_location(db, area_name, district_name, division)
 
-    shelter = Shelter(
-        name=name.strip(),
-        location_id=location.id,
-        capacity=capacity,
-        has_medical_unit=bool(has_medical_unit),
+    # Raw SQL with an explicit enum cast: shelters.status is a native
+    # Postgres ENUM (shelter_status), but the ORM's client-side default
+    # ("open") is sent as VARCHAR, which Postgres rejects for enum
+    # columns -- same class of bug already found and fixed on alerts.
+    db.execute(
+        text(
+            """
+            INSERT INTO shelters (shelter_name, location_id, capacity, current_occupancy, status, has_medical_unit, opened_at)
+            VALUES (:name, :location_id, :capacity, 0, CAST('open' AS shelter_status), :has_medical_unit, NOW())
+            """
+        ),
+        {
+            "name": name.strip(),
+            "location_id": location.id,
+            "capacity": capacity,
+            "has_medical_unit": bool(has_medical_unit),
+        },
     )
-    db.add(shelter)
     db.commit()
     return _redirect("/shelters", "Shelter added.")
 

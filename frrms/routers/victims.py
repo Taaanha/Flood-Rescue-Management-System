@@ -92,11 +92,14 @@ async def victims_page(
 @router.post("/victims/register", response_model=None)
 async def register_victim(
     full_name: str = Form(...),
-    incident_id: str | None = Form(None),#changed from int to str
+    incident_id: str | None = Form(None),
     incident_title: str = Form(""),
     district: str = Form(""),
     status_value: str = Form("rescued"),
     special_needs: str = Form(""),
+    gender: str = Form(""),
+    age_min: str = Form(""),
+    age_max: str = Form(""),
     _: dict = Depends(require_role(["admin", "coordinator", "field_personnel"])),
     db: Session = Depends(get_db),
 ) -> RedirectResponse:
@@ -111,7 +114,6 @@ async def register_victim(
     incident_id = int(incident_id) if incident_id and incident_id.strip().isdigit() else None
     resolved_incident_id = incident_id
     if resolved_incident_id is None and incident_title.strip():
-    
         existing_incident = db.execute(
             text("SELECT incident_id FROM incidents WHERE LOWER(title)=LOWER(:title) ORDER BY incident_id DESC LIMIT 1"),
             {"title": incident_title.strip()},
@@ -133,9 +135,29 @@ async def register_victim(
                 ).scalar_one()
             )
 
+    gender_norm = gender.strip().capitalize() or None
+    if gender_norm not in ("Male", "Female", "Other"):
+        gender_norm = None
+    age_min_val = int(age_min) if age_min and age_min.strip().isdigit() else None
+    age_max_val = int(age_max) if age_max and age_max.strip().isdigit() else None
+
+    db.execute(text("ALTER TABLE persons ADD COLUMN IF NOT EXISTS age_min INTEGER"))
+    db.execute(text("ALTER TABLE persons ADD COLUMN IF NOT EXISTS age_max INTEGER"))
+
     person_id = db.execute(
-        text("INSERT INTO persons(full_name, created_at) VALUES (:full_name, NOW()) RETURNING person_id"),
-        {"full_name": full_name.strip()},
+        text(
+            """
+            INSERT INTO persons(full_name, gender, age_min, age_max, created_at)
+            VALUES (:full_name, :gender, :age_min, :age_max, NOW())
+            RETURNING person_id
+            """
+        ),
+        {
+            "full_name": full_name.strip(),
+            "gender": gender_norm,
+            "age_min": age_min_val,
+            "age_max": age_max_val,
+        },
     ).scalar_one()
 
     db.execute(
@@ -191,4 +213,3 @@ async def leave_shelter(
     )
     db.commit()
     return RedirectResponse(url="/victims?msg=Victim+updated+as+left+shelter", status_code=302)
-

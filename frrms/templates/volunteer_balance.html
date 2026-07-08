@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer AI Balancing | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">
+        <i class="fa-solid fa-scale-balanced text-danger me-1"></i>Volunteer AI Balancing
+      </h2>
+      <p class="text-muted small mb-0">
+        Pending volunteer requests are matched to whichever district currently has the
+        highest unmet need (live flood risk, weighted down by how many volunteers are
+        already there) &mdash; not just wherever they typed in. Confirm to apply.
+      </p>
+    </div>
+    <a href="/volunteer-registration" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-user-plus me-1"></i>Volunteer Registration
+    </a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom">
+            <h3 class="h6 fw-semibold mb-0">Suggested Assignments</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase">
+                  <th class="px-3">Team</th>
+                  <th>Requested</th>
+                  <th>AI Suggests</th>
+                  <th>Why</th>
+                  <th class="pe-3">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in suggestions %}
+                <tr>
+                  <td class="px-3">{{ s.team_name }}</td>
+                  <td>{{ s.preferred_district or 'no preference' }}</td>
+                  <td>
+                    <span class="badge {% if s.preferred_district == s.suggested_district %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                      {{ s.suggested_district }}
+                    </span>
+                  </td>
+                  <td class="small text-muted" style="max-width: 320px">{{ s.reason }}</td>
+                  <td class="pe-3">
+                    <form method="post" action="/admin/volunteer-balance/assign">
+                      <input type="hidden" name="request_id" value="{{ s.request_id }}" />
+                      <input type="hidden" name="district_name" value="{{ s.suggested_district }}" />
+                      <button class="btn btn-sm btn-success" type="submit">Confirm</button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td class="px-3 py-4 text-muted text-center" colspan="5">
+                    No pending volunteer requests right now.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+          <div class="p-3 border-bottom">
+            <h3 class="h6 fw-semibold mb-0">Current Coverage vs. Risk</h3>
+            <p class="text-muted small mb-0">Sorted by flood risk, highest first.</p>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase">
+                  <th class="px-3">District</th>
+                  <th>Risk</th>
+                  <th>Volunteers</th>
+                  <th class="pe-3">Coverage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in distribution %}
+                <tr>
+                  <td class="px-3">{{ d.district }}</td>
+                  <td>
+                    {% if d.risk is not none %}{{ "%.0f"|format(d.risk * 100) }}%{% else %}&mdash;{% endif %}
+                  </td>
+                  <td>{{ d.volunteers }}</td>
+                  <td class="pe-3">
+                    {% if d.risk is not none and d.risk >= 0.6 and d.volunteers == 0 %}
+                      <span class="badge bg-danger">Uncovered &amp; high risk</span>
+                    {% elif d.volunteers == 0 %}
+                      <span class="badge bg-secondary">No volunteers</span>
+                    {% elif d.risk is not none and d.volunteers > 5 and d.risk < 0.3 %}
+                      <span class="badge bg-warning text-dark">Possibly over-allocated</span>
+                    {% else %}
+                      <span class="badge bg-success-subtle text-success">OK</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td class="px-3 py-4 text-muted text-center" colspan="4">No data yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -180,15 +180,28 @@ async def create_alert_marker(
         except ValueError:
             expires_at_dt = None
 
-    db.add(
-        Alert(
-            location_id=location.id,
-            alert_type=alert_type,
-            severity=severity,
-            message=message.strip(),
-            status="issued",
-            expires_at=expires_at_dt,
-        )
+    db.execute(
+        text(
+            """
+            INSERT INTO alerts (location_id, alert_type, message, severity, status, expires_at, issued_at)
+            VALUES (
+                :location_id,
+                CAST(:alert_type AS alert_type),
+                :message,
+                CAST(:severity AS severity_level),
+                CAST('issued' AS alert_status),
+                :expires_at,
+                NOW()
+            )
+            """
+        ),
+        {
+            "location_id": location.id,
+            "alert_type": alert_type,
+            "message": message.strip(),
+            "severity": severity,
+            "expires_at": expires_at_dt,
+        },
     )
     db.commit()
     return RedirectResponse(url="/dashboard?msg=Alert+marker+added", status_code=302)
@@ -207,3 +220,4 @@ async def clear_alert_marker(
     db.add(alert)
     db.commit()
     return RedirectResponse(url="/dashboard?msg=Alert+marker+removed", status_code=302)
+

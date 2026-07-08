@@ -3,7 +3,10 @@ Fetches current/near-term weather for a lat/lon from Open-Meteo (free,
 no API key) and converts it into the exact feature units the flood-risk
 model was trained on:
 
-    Rainfall            cm/day   (Open-Meteo gives mm -> /10)
+    Rainfall             mm, trailing 30-day TOTAL (monthly-equivalent;
+                          matches training data's monthly total, verified
+                          against the dataset's actual scale -- NOT cm,
+                          and NOT instantaneous current rain)
     Wind_Speed           m/s     (request windspeed_unit=ms)
     Cloud_Coverage       okta 0-8 (Open-Meteo gives % -> /12.5)
     Bright_Sunshine      hours   (Open-Meteo gives seconds -> /3600)
@@ -47,10 +50,19 @@ def fetch_current_features(latitude: float, longitude: float) -> dict[str, Any]:
         yet (often the current day). Drop those instead of crashing."""
         return [v for v in (series or []) if v is not None]
 
-    precip_series = clean(daily.get("precipitation_sum"))
+    precip_series = clean(daily.get("precipitation_sum"))  # Open-Meteo: mm/day
+    # Trailing 30-day rainfall TOTAL, in mm -- this matches both the scale
+    # AND the unit of the training data's "Rainfall" column, which is a
+    # MONTHLY total in millimeters (verified against the dataset: mean of
+    # 567mm across flood-positive months, up to 2072mm -- clearly mm, not
+    # cm as originally assumed). No /10 conversion needed: Open-Meteo's
+    # precipitation_sum is already in mm, the same unit as training data.
+    last_30 = precip_series[-30:] if len(precip_series) >= 30 else precip_series
+    rainfall_30d_total_mm = sum(last_30) if last_30 else 0.0
+
     # Trailing ~90-day daily rainfall average, scaled to a monthly figure,
-    # to match the training feature's units (cm, averaged over 3 months).
-    rainfall_3mo_avg_cm = (sum(precip_series) / len(precip_series) / 10 * 30) if precip_series else 0.0
+    # used as a separate antecedent-moisture / soil-saturation proxy.
+    rainfall_3mo_avg_mm = (sum(precip_series) / len(precip_series) * 30) if precip_series else 0.0
 
     temp_max_series = clean(daily.get("temperature_2m_max"))
     temp_min_series = clean(daily.get("temperature_2m_min"))
@@ -63,7 +75,7 @@ def fetch_current_features(latitude: float, longitude: float) -> dict[str, Any]:
     return {
         "Max_Temp": temp_max_series[-1] if temp_max_series else (current.get("temperature_2m") or 0),
         "Min_Temp": temp_min_series[-1] if temp_min_series else (current.get("temperature_2m") or 0),
-        "Rainfall": (current.get("precipitation") or 0) / 10,  # mm -> cm
+        "Rainfall": rainfall_30d_total_mm,
         "Relative_Humidity": current.get("relative_humidity_2m") or 0,
         "Wind_Speed": current.get("wind_speed_10m") or 0,
         "Cloud_Coverage": (current.get("cloud_cover") or 0) / 12.5,  # % -> okta
@@ -77,7 +89,7 @@ def fetch_current_features(latitude: float, longitude: float) -> dict[str, Any]:
         "Month_sin": _month_sin(today.month),
         "Month_cos": _month_cos(today.month),
         "Is_Monsoon": int(today.month in (6, 7, 8, 9)),
-        "Rainfall_3mo_avg": rainfall_3mo_avg_cm,
+        "Rainfall_3mo_avg": rainfall_3mo_avg_mm,
         "fetched_at": datetime.utcnow().isoformat(),
     }
 

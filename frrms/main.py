@@ -10,10 +10,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .database import check_database_connection, create_db_and_tables
 from .dependencies import normalize_role
-from .routers import auth, dashboard, victims, rescue_units, inventory, operations, command, risk,dispatch
-
+from .routers import auth, dashboard, victims, rescue_units, inventory, operations, command, risk, dispatch, reunification, volunteer_ai
 app = FastAPI(title="FRRMS Command", docs_url=None, redoc_url=None)
-
 # Session-based authentication
 app.add_middleware(
     SessionMiddleware,
@@ -34,6 +32,8 @@ app.include_router(operations.router)
 app.include_router(command.router)
 app.include_router(risk.router)
 app.include_router(dispatch.router)
+app.include_router(reunification.router)
+app.include_router(volunteer_ai.router)
 
 
 def _default_landing_for_role(role: str | None) -> str:

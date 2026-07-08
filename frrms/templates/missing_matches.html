@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Missing-Person Matching | FRRMS Command{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  {% if message %}
+  <div class="alert alert-info py-2">{{ message }}</div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+      <h2 class="h4 mb-1 fw-semibold">
+        <i class="fa-solid fa-people-arrows text-danger me-1"></i>Missing-Person AI Matching
+      </h2>
+      <p class="text-muted small mb-0">
+        Fuzzy name matching (with district/gender/age corroboration where available)
+        between {{ missing_count }} missing report{{ 's' if missing_count != 1 else '' }}
+        and {{ found_count }} found/rescued record{{ 's' if found_count != 1 else '' }}.
+        Suggestions only &mdash; a coordinator must confirm before any record changes.
+      </p>
+    </div>
+    <a href="/victims" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-person-half-dress me-1"></i>Victim Registry
+    </a>
+  </div>
+
+  {% for row in rows %}
+  <div class="card shadow-sm border-0 rounded-3 mb-3">
+    <div class="card-body">
+      <h3 class="h6 fw-semibold mb-2">
+        Missing: {{ row.missing.full_name }}
+        <span class="text-muted small fw-normal">
+          ({{ row.missing.district or 'district unknown' }})
+        </span>
+      </h3>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th>Candidate</th>
+              <th>Status</th>
+              <th>District</th>
+              <th>Match Score</th>
+              <th>Basis</th>
+              <th class="pe-3">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in row.candidates %}
+            <tr>
+              <td>{{ c.found_name }}</td>
+              <td><span class="badge bg-success-subtle text-success">{{ c.found_status }}</span></td>
+              <td>{{ c.found_district or '-' }}</td>
+              <td>
+                <span class="badge {% if c.score >= 80 %}bg-success{% elif c.score >= 60 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                  {{ c.score }}%
+                </span>
+              </td>
+              <td class="small text-muted">
+                name {{ c.name_similarity }}%{% if c.district_match %}, same district{% endif %}{% if c.district_match == false and row.missing.district and c.found_district %}, different district{% endif %}{% if c.gender_match == true %}, same gender{% endif %}{% if c.gender_match == false %}, different gender{% endif %}{% if c.age_overlap == true %}, age range overlaps{% endif %}{% if c.age_overlap == false %}, age range mismatch{% endif %}
+                <br /><span class="fw-semibold">{{ c.confidence_label }}</span>
+              </td>
+              <td class="pe-3 d-flex gap-1">
+                <form method="post" action="/admin/missing-matches/confirm">
+                  <input type="hidden" name="missing_victim_id" value="{{ row.missing.victim_id }}" />
+                  <input type="hidden" name="found_victim_id" value="{{ c.found_victim_id }}" />
+                  <button class="btn btn-sm btn-success" type="submit">Confirm Match</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body text-center text-muted py-4">
+      No candidate matches above the confidence threshold right now.
+    </div>
+  </div>
+  {% endfor %}
+
+  <p class="text-muted small mt-3">
+    Note: name similarity is the primary signal; district/gender/age agreement only
+    adjusts confidence and can never produce a match on their own. Confirming a match
+    marks the missing report as "reunited" and links it to the found record &mdash;
+    it does not merge or delete either record.
+  </p>
+</div>
+{% endblock %}

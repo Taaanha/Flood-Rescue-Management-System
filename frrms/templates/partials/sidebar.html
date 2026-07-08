@@ -82,7 +82,25 @@
           class="nav-link d-flex align-items-center gap-2 {% if page == 'smart_routing' %}active{% endif %}"
         >
           <i class="fa-solid fa-route"></i>
-          <span>Smart Routing</span>
+          <span>Smart Routing <span class="badge bg-danger ms-1">AI</span></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('missing_matches') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'missing_matches' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-people-arrows"></i>
+          <span>Missing Matching <span class="badge bg-danger ms-1">AI</span></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          href="{{ url_for('volunteer_balance') }}"
+          class="nav-link d-flex align-items-center gap-2 {% if page == 'volunteer_balance' %}active{% endif %}"
+        >
+          <i class="fa-solid fa-scale-balanced"></i>
+          <span>Volunteer Balance <span class="badge bg-danger ms-1">AI</span></span>
         </a>
       </li>
       {% endif %}
@@ -171,3 +189,4 @@
     </div>
   </div>
 </div>
+

@@ -46,7 +46,7 @@
             {% endfor %}
           </datalist>
         </div>
-        <div class="col-12 col-md-2">
+<div class="col-12 col-md-2">
           <input class="form-control" type="text" name="district" placeholder="District" />
         </div>
         <div class="col-12 col-md-2">
@@ -57,10 +57,24 @@
             <option value="hospitalized">Hospitalized</option>
           </select>
         </div>
-        <div class="col-12 col-md-10">
+        <div class="col-6 col-md-2">
+          <select class="form-select" name="gender">
+            <option value="">Gender (optional)</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="number" name="age_min" placeholder="Age from" min="0" max="120" />
+        </div>
+        <div class="col-6 col-md-2">
+          <input class="form-control" type="number" name="age_max" placeholder="Age to" min="0" max="120" />
+        </div>
+<div class="col-12 col-md-8">
           <input class="form-control" type="text" name="special_needs" placeholder="Special needs (optional)" />
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-12 col-md-4">
           <button class="btn btn-primary btn-sm w-100" type="submit">Register</button>
         </div>
       </form>
