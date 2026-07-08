@@ -27,7 +27,7 @@
         </div>
         {% endif %}
 
-        <form method="post" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+        <form method="post" action="/login" class="needs-validation" novalidate>
           <div class="mb-3">
             <label for="username" class="form-label small fw-semibold">Username</label>
             <input
@@ -84,7 +84,7 @@
           </div>
         </div>
 
-        <form id="quick-login-form" method="post" action="{{ url_for('login') }}" class="d-none">
+        <form id="quick-login-form" method="post" action="/login" class="d-none">
           <input type="hidden" id="quick-username" name="username" />
           <input type="hidden" id="quick-password" name="password" />
         </form>
@@ -105,4 +105,3 @@
   </div>
 </div>
 {% endblock %}
-

@@ -10,4 +10,4 @@ COPY . .
 # Hugging Face Spaces expects the app to listen on port 7860
 EXPOSE 7860
 
-CMD ["uvicorn", "frrms.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "frrms.main:app", "--host", "0.0.0.0", "--port", "7860", "--proxy-headers", "--forwarded-allow-ips=*"]
